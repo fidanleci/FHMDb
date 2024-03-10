@@ -8,7 +8,6 @@ public class Movie {
     private String title;
     private String description;
     // TODO add more properties here
-
     private List<Genre> genres;
 
 
@@ -16,6 +15,10 @@ public class Movie {
         this.title = title;
         this.description = description;
         this.genres = genres;
+    }
+
+    public List<Genre> getGenres() {
+        return genres;
     }
 
     /*ENUM WITH ALL GENRES TO ASSIGN TO MOVIES*/
