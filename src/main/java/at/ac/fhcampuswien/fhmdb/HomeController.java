@@ -1,5 +1,6 @@
 package at.ac.fhcampuswien.fhmdb;
 
+import at.ac.fhcampuswien.fhmdb.models.Genre;
 import at.ac.fhcampuswien.fhmdb.models.Movie;
 import at.ac.fhcampuswien.fhmdb.ui.MovieCell;
 import com.jfoenix.controls.JFXButton;
@@ -12,12 +13,16 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.TextField;
 
 import java.net.URL;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class HomeController implements Initializable {
     @FXML
     public JFXButton searchBtn;
-
+    @FXML
+    public JFXButton deleteBtn;
     @FXML
     public TextField searchField;
 
@@ -30,121 +35,88 @@ public class HomeController implements Initializable {
     @FXML
     public JFXButton sortBtn;
 
-    public JFXButton deleteBtn;
-
     public List<Movie> allMovies = Movie.initializeMovies();
 
-    private final ObservableList<Movie> observableMovies = FXCollections.observableArrayList();   // automatically updates corresponding UI elements when underlying data changes
+    public final ObservableList<Movie> observableMovies = FXCollections.observableArrayList();
 
-    private ObservableList<Movie> sortByGenre = FXCollections.observableArrayList();
+    public HomeController(List<Movie> allMovies) {
+
+    }
+
+    public HomeController() {
+
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        observableMovies.addAll(allMovies);         // add dummy data to observable list
-        movieListView.getItems().addAll(allMovies);
+        observableMovies.addAll(allMovies);
+        movieListView.setItems(observableMovies);
+        movieListView.setCellFactory(movieListView -> new MovieCell());
 
-
-        // initialize UI stuff
-        movieListView.setItems(observableMovies);   // set data of observable list to list view
-        movieListView.setCellFactory(movieListView -> new MovieCell()); // use custom cell factory to display data
-
-        // TODO add genre filter items with genreComboBox.getItems().addAll(...)
         genreComboBox.setPromptText("Filter by Genre");
+        genreComboBox.getItems().addAll("ACTION", "ADVENTURE", "ANIMATION", "BIOGRAPHY", "COMEDY",
+                "CRIME", "DRAMA", "DOCUMENTARY", "FAMILY", "FANTASY", "HISTORY", "HORROR",
+                "MUSICAL", "MYSTERY", "ROMANCE", "SCIENCE_FICTION", "SPORT", "THRILLER", "WAR",
+                "WESTERN");
 
-        genreComboBox.getItems().addAll(Arrays.asList(Movie.Genre.values()));
-
-
-        // TODO add event handlers to buttons and call the regarding methods
-        // either set event handlers in the fxml file (onAction) or add them here
+        searchBtn.setOnAction(actionEvent -> applyFilters());
+        deleteBtn.setOnAction(actionEvent -> Delete());
 
         // Sort button example:
         sortBtn.setOnAction(actionEvent -> {
-            //  CREATE A STRING, WHICH WILL BE THE WORD IN THE SEARCH-FIELD
-            String searchQuery = searchField.getText().toLowerCase();
-            Movie.Genre selectedGenre = (Movie.Genre) genreComboBox.getValue();
-            List<Movie> filteredMovies = new ArrayList<>();
-
-            List<Movie> searchResult = searchMoviesByLetter(searchQuery);
-            List<Movie> genreResult = searchByGenre(selectedGenre);
-
-
-            filteredMovies.addAll(mergeMovies(searchResult, genreResult));
-
-            observableMovies.clear();
-            observableMovies.addAll(filteredMovies);
-
-            });
-        // Functionality of Sort Button
-        sortBtn.setOnAction(actionEvent -> {
-            sortMovies(observableMovies, sortBtn.getText());
-            if (Objects.equals(sortBtn.getText(), "Sort (asc)")) {
+            if (sortBtn.getText().equals("Sort (asc)")) {
+                FXCollections.sort(observableMovies, Comparator.comparing(Movie::getTitle));
+                // TODO sort observableMovies ascending
                 sortBtn.setText("Sort (desc)");
             } else {
+                FXCollections.sort(observableMovies, (movie1, movie2) -> movie2.getTitle().compareTo(movie1.getTitle()));
+                // TODO sort observableMovies descending
                 sortBtn.setText("Sort (asc)");
             }
         });
-
-        /**
-        Functionality of Delete Button
-         */
-        deleteBtn.setOnAction(actionEvent -> clearState());
-
-    }
-    public ObservableList<Movie> sortMovies(ObservableList<Movie> observableMovies, String sortBtnText) {
-
-        if (Objects.equals(sortBtnText, "Sort (asc)")) {
-            observableMovies.sort(Comparator.comparing(Movie::getTitle));
-        } else {
-            observableMovies.sort(Comparator.comparing(Movie::getDescription).reversed());
-        }
-        return observableMovies;
     }
 
-    public List<Movie> searchMoviesByLetter(String searchQuery) {
+    public void applyFilters() {
+        String query = searchField.getText().toLowerCase();
+        String selectedGenre = genreComboBox.getValue() != null ? genreComboBox.getValue().toString() : "";
 
-        List<Movie> filteredMovies = new ArrayList<>();
-
-        for (Movie movie : allMovies) {
-            if (movie.getTitle().toLowerCase().contains(searchQuery) || movie.getDescription().contains(searchQuery)) {
-                filteredMovies.add(movie);
-            }
-            //observableMovies.setAll(filteredMovies);
-        }
-        return filteredMovies;
-    }
-    public List<Movie> searchByGenre(Movie.Genre selectedGenre) {
-
-        List<Movie> filteredMovies = new ArrayList<>();
-
-        for (Movie movie : allMovies) {
-            if (movie.getGenres().contains(selectedGenre) || selectedGenre == null) {
-                filteredMovies.add(movie);
-            }
-            observableMovies.setAll(filteredMovies);
-        }
-        return filteredMovies;
+        List<Movie> filteredMovies = allMovies.stream()
+                .filter(movie -> isTitleOrDescriptionContainsQuery(movie, query))
+                .filter(movie -> isGenreMatches(movie, selectedGenre))
+                .collect(Collectors.toList());
+        Delete();
+        movieListView.setItems(FXCollections.observableArrayList(filteredMovies));
+        movieListView.setCellFactory(movieListView -> new MovieCell());
+        System.out.println("Query: " + query);
+        System.out.println("Selected Genre: " + selectedGenre);
     }
 
-
-
-    public List<Movie> mergeMovies(List<Movie> list1, List<Movie> list2) {
-
-        List<Movie> mergedMovies = new ArrayList<>();
-
-        for (Movie merge : list1) {
-            if (list2.contains(merge))
-                mergedMovies.add(merge);
-        }
-        return mergedMovies;
+    private boolean isTitleOrDescriptionContainsQuery(Movie movie, String query) {
+        return movie.getTitle().toLowerCase().contains(query) ||
+                (movie.getDescription() != null && movie.getDescription().toLowerCase().contains(query));
     }
 
-    public void clearState() {
-
-        searchField.setText("");
+    public void Delete() {
         genreComboBox.setValue(null);
-
-        observableMovies.clear();
-        observableMovies.setAll(allMovies);
+        movieListView.setItems(FXCollections.observableArrayList(allMovies));
+        movieListView.setCellFactory(movieListView -> new MovieCell());
     }
 
+
+
+
+    private boolean isGenreMatches(Movie movie, String selectedGenre) {
+        if (selectedGenre == null || selectedGenre.isEmpty()) {
+            return true; // Wenn kein Genre ausgew채hlt wurde, wird der Filter 체bersprungen
+
+        }
+
+        try {
+            Genre genre = Genre.valueOf(selectedGenre.toUpperCase());
+            return movie.getGenres().contains(genre);
+        } catch (IllegalArgumentException e) {
+            // Wenn der Genre-Wert kein g체ltiger Enum-Wert ist, wird der Filter 체bersprungen
+            return false;
+        }
+    }
 }

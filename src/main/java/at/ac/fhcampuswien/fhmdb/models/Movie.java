@@ -8,42 +8,19 @@ public class Movie {
     private String title;
     private String description;
     // TODO add more properties here
-    private List<Genre> genres;
+    private List<Genre> Genres;
 
 
     public Movie(String title, String description, List<Genre> genres) {
         this.title = title;
         this.description = description;
-        this.genres = genres;
+        this.Genres = genres;
     }
 
     public List<Genre> getGenres() {
-        return genres;
+        return Genres;
     }
 
-    /*ENUM WITH ALL GENRES TO ASSIGN TO MOVIES*/
-    public enum Genre {
-        ACTION,
-        ADVENTURE,
-        ANIMATION,
-        BIOGRAPHY,
-        COMEDY,
-        CRIME,
-        DRAMA,
-        DOCUMENTARY,
-        FAMILY,
-        FANTASY,
-        HISTORY,
-        HORROR,
-        MUSICAL,
-        MYSTERY,
-        ROMANCE,
-        SCIENCE_FICTION,
-        SPORT,
-        THRILLER,
-        WAR,
-        WESTERN,
-    }
     public String getTitle() {
         return title;
     }
