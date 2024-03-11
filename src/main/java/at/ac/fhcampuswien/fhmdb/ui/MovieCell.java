@@ -9,16 +9,22 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
+import java.util.stream.Collectors;
+
 public class MovieCell extends ListCell<Movie> {
     private final Label title = new Label();
     private final Label detail = new Label();
-    private final VBox layout = new VBox(title, detail);
+    private final Label genre = new Label();
+    private final Label releaseYear = new Label();
+    private final Label rating = new Label();
+    private final VBox layout = new VBox(title, detail, genre, releaseYear, rating);
 
     @Override
     protected void updateItem(Movie movie, boolean empty) {
         super.updateItem(movie, empty);
 
         if (empty || movie == null) {
+            setGraphic(null);
             setText(null);
         } else {
             this.getStyleClass().add("movie-cell");
@@ -29,10 +35,22 @@ public class MovieCell extends ListCell<Movie> {
                             : "No description available"
             );
 
+            String genres = movie.getGenres()
+                    .stream()
+                    .map(Enum::toString)
+                    .collect(Collectors.joining(", "));
+            genre.setText("Genres: " + genres);
+
+            releaseYear.setText("Release Year: " + String.valueOf(movie.getReleaseYear()));
+            rating.setText("Rating: " + String.valueOf(movie.getRating()));
 
             // color scheme
             title.getStyleClass().add("text-yellow");
             detail.getStyleClass().add("text-white");
+            genre.getStyleClass().add("text-white");
+            releaseYear.getStyleClass().add("text-white");
+            rating.getStyleClass().add("text-white");
+            genre.setStyle("-fx-font-style: italic");
             layout.setBackground(new Background(new BackgroundFill(Color.web("#454545"), null, null)));
 
             // layout
@@ -46,4 +64,3 @@ public class MovieCell extends ListCell<Movie> {
         }
     }
 }
-
