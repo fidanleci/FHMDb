@@ -6,7 +6,7 @@ module at.ac.fhcampuswien.fhmdb {
     requires com.jfoenix;
     requires okhttp3;
     requires com.google.gson;
-    requires org.junit.jupiter.api;
+
 
     opens at.ac.fhcampuswien.fhmdb to javafx.fxml;
     exports at.ac.fhcampuswien.fhmdb.models;

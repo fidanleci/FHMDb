@@ -18,6 +18,7 @@ import javafx.scene.control.TextField;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -57,9 +58,11 @@ public class HomeController implements Initializable {
         addListeners();
 
     }
+
     public void Delete(ActionEvent actionEvent) {
         clearState();
     }
+
     public void clearState() {
 
         searchField.setText("");
@@ -71,6 +74,7 @@ public class HomeController implements Initializable {
         observableMovies.addAll(allMovies);
         sortMovies(sortedState);
     }
+
     private void initializeState() {
         sortedState = SortedState.NONE;
         try {
@@ -90,7 +94,7 @@ public class HomeController implements Initializable {
         genreComboBox.setPromptText("Filter by Genre");
         genreComboBox.getItems().addAll(Genre.values());
         ratingComboBox.setPromptText("Filter by Rating");
-        String[] rating = new String[] {"1", "2", "3", "4" , "5", "6", "7", "8", "9"};
+        String[] rating = new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9"};
         ratingComboBox.getItems().add("No Rating");
         ratingComboBox.getItems().addAll(rating);
         yearTextField.setPromptText("Filter by Release Year");
@@ -104,7 +108,6 @@ public class HomeController implements Initializable {
         });
 
 
-
     }
 
     public void searchBtnClicked(ActionEvent actionEvent) {
@@ -116,13 +119,13 @@ public class HomeController implements Initializable {
         List<Movie> filteredMovies = allMovies.stream()
                 .filter(movie -> movie.getTitle().toLowerCase().contains(searchQuery)
                         || movie.getDescription().toLowerCase().contains(searchQuery))
+                //Filter mit Description
                 .filter(movie -> selectedGenre == null || movie.getGenres().contains(selectedGenre))
                 .filter(movie -> yearTextField.getText().isEmpty() || (selectedYear != 0 && movie.getReleaseYear() == selectedYear))
                 //.filter(movie -> selectedRating == null || (double) selectedRating == 0.0 || movie.getRating() == (double) selectedRating)
                 .filter(movie -> selectedRating == null ||
                         ((selectedRating instanceof String && ((String) selectedRating).equals("No Rating")) ||
                                 (selectedRating instanceof String && Double.parseDouble((String) selectedRating) <= movie.getRating())))
-
 
 
                 .collect(Collectors.toList());
@@ -135,7 +138,6 @@ public class HomeController implements Initializable {
     public void sortBtnClicked(ActionEvent actionEvent) {
         sortMovies();
     }
-
 
 
     private void sortMovies() {
@@ -156,5 +158,33 @@ public class HomeController implements Initializable {
         }
     }
 
+    public String getMostPopularActor(List<Movie> movies) {
+        return movies.stream()
+                .flatMap(movie -> movie.getMainCast().stream())
+                .collect(Collectors.groupingBy(actor -> actor, Collectors.counting()))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
+    }
+
+    public int getLongestMovieTitle(List<Movie> movies) {
+        return movies.stream()
+                .mapToInt(movie -> movie.getTitle().length())
+                .max()
+                .orElse(0);
+    }
+
+    public long countMoviesFrom(List<Movie> movies, String director) {
+        return movies.stream()
+                .filter(movie -> movie.getDirector().equals(director))
+                .count();
+    }
+
+    public List<Movie> getMoviesBetweenYears(List<Movie> movies, int startYear, int endYear) {
+        return movies.stream()
+                .filter(movie -> movie.getReleaseYear() >= startYear && movie.getReleaseYear() <= endYear)
+                .collect(Collectors.toList());
+    }
 
 }
