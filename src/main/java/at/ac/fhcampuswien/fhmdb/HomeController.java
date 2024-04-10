@@ -47,16 +47,15 @@ public class HomeController implements Initializable {
     @FXML
     public JFXButton sortBtn;
 
-    private List<Movie> allMovies;
-    private ObservableList<Movie> observableMovies = FXCollections.observableArrayList();
-    private SortedState sortedState;
+    public List<Movie> allMovies;
+    public ObservableList<Movie> observableMovies = FXCollections.observableArrayList();
+    public SortedState sortedState;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         initializeState();
         initializeLayout();
         addListeners();
-
     }
 
     public void Delete(ActionEvent actionEvent) {
@@ -64,7 +63,6 @@ public class HomeController implements Initializable {
     }
 
     public void clearState() {
-
         searchField.setText("");
         genreComboBox.setValue(null);
         yearTextField.setText("");
@@ -75,7 +73,7 @@ public class HomeController implements Initializable {
         sortMovies(sortedState);
     }
 
-    private void initializeState() {
+    public void initializeState() {
         sortedState = SortedState.NONE;
         try {
             MovieAPI movieAPI = new MovieAPI();
@@ -83,7 +81,7 @@ public class HomeController implements Initializable {
             observableMovies.addAll(allMovies);
             sortMovies(sortedState);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Fehler beim Laden der Filme: " + e.getMessage());
         }
     }
 
@@ -106,8 +104,6 @@ public class HomeController implements Initializable {
                 yearTextField.setText(newValue.replaceAll("[^\\d]", ""));
             }
         });
-
-
     }
 
     public void searchBtnClicked(ActionEvent actionEvent) {
@@ -119,15 +115,11 @@ public class HomeController implements Initializable {
         List<Movie> filteredMovies = allMovies.stream()
                 .filter(movie -> movie.getTitle().toLowerCase().contains(searchQuery)
                         || movie.getDescription().toLowerCase().contains(searchQuery))
-                //Filter mit Description
                 .filter(movie -> selectedGenre == null || movie.getGenres().contains(selectedGenre))
                 .filter(movie -> yearTextField.getText().isEmpty() || (selectedYear != 0 && movie.getReleaseYear() == selectedYear))
-                //.filter(movie -> selectedRating == null || (double) selectedRating == 0.0 || movie.getRating() == (double) selectedRating)
                 .filter(movie -> selectedRating == null ||
                         ((selectedRating instanceof String && ((String) selectedRating).equals("No Rating")) ||
                                 (selectedRating instanceof String && Double.parseDouble((String) selectedRating) <= movie.getRating())))
-
-
                 .collect(Collectors.toList());
 
         observableMovies.clear();
@@ -139,8 +131,7 @@ public class HomeController implements Initializable {
         sortMovies();
     }
 
-
-    private void sortMovies() {
+    public void sortMovies() {
         if (sortedState == SortedState.NONE || sortedState == SortedState.ASCENDING) {
             sortMovies(SortedState.DESCENDING);
         } else if (sortedState == SortedState.DESCENDING) {
@@ -176,8 +167,14 @@ public class HomeController implements Initializable {
     }
 
     public long countMoviesFrom(List<Movie> movies, String director) {
+        if (movies == null) {
+            return 0;
+        }
         return movies.stream()
-                .filter(movie -> movie.getDirector().equals(director))
+                .filter(movie -> {
+                    String movieDirector = movie.getDirector();
+                    return movieDirector != null && movieDirector.equals(director);
+                })
                 .count();
     }
 
@@ -186,5 +183,28 @@ public class HomeController implements Initializable {
                 .filter(movie -> movie.getReleaseYear() >= startYear && movie.getReleaseYear() <= endYear)
                 .collect(Collectors.toList());
     }
+    public List<Movie> filterByQuery(List<Movie> movies, String searchQuery) {
+        if (searchQuery == null || searchQuery.trim().isEmpty()) {
+            return movies;
+        }
+        if(movies == null){
+            throw new IllegalArgumentException("not null");
+        }
 
+        String lowercaseSearchQuery = searchQuery.toLowerCase();
+
+        return movies.stream()
+                .filter(movie -> movie.getTitle().toLowerCase().contains(lowercaseSearchQuery) ||
+                        movie.getDescription().toLowerCase().contains(lowercaseSearchQuery))
+                .collect(Collectors.toList());
+    }
+    public List<Movie> filterByGenre(List<Movie> movies, Genre genre) {
+        if (genre == null) {
+            return movies;
+        }
+
+        return movies.stream()
+                .filter(movie -> movie.getGenres().contains(genre))
+                .collect(Collectors.toList());
+    }
 }

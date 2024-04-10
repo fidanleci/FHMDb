@@ -19,6 +19,8 @@ public class Movie {
         this.genres = genres;
         this.releaseYear = releaseYear;
         this.rating = rating;
+        this.director = director;
+
     }
 
 
